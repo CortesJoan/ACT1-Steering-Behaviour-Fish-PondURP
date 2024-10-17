@@ -105,8 +105,8 @@ MonoBehaviour:
   bloodAccumulation: {fileID: 8400000, guid: d93c7a72b022bbb49ab3c24c46ca33a9, type: 2}
   bloodSplatterMaterial: {fileID: 2100000, guid: a23cee4192983fc4cb649f285a7f8312, type: 2}
   additiveBlendMaterial: {fileID: 2100000, guid: 90ce2cf31cda87142a0479a925bce257, type: 2}
-  bloodEffectMaterial: {fileID: 2100000, guid: 2a15e3fc40e3c18489eeb4766d185448, type: 2}
-  bloodSplatterRadius: 0.1
+  bloodEffectMaterial: {fileID: 2100000, guid: a23cee4192983fc4cb649f285a7f8312, type: 2}
+  bloodSplatterRadius: 15
   onFishKilled:
     m_PersistentCalls:
       m_Calls: []
