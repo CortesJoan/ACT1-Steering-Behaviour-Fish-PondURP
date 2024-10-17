@@ -1,0 +1,422 @@
+using System;
+using TMPro;
+using UnityEngine;
+using UnityEngine.Events;
+
+public class FishCounterUI : MonoBehaviour
+{
+    [SerializeField] TMP_Text fishCountName;
+    [SerializeField] TMP_InputField fishCount;
+    public UnityEvent<int> onValidInput;
+
+    public void Start()
+    {
+        fishCount.onEndEdit.AddListener(ResetToZero);
+    }
+    string previousValidCountText="0";
+    private void ResetToZero(string value)
+    {
+        if (int.TryParse(value, out int parsedCount))
+        {
+
+            if (parsedCount < 0)
+            {
+                fishCount.text = previousValidCountText;
+            }
+            else
+            {
+                previousValidCountText = value;
+                onValidInput?.Invoke(parsedCount);
+            }
+
+        }
+        else
+        {
+            fishCount.text = previousValidCountText;
+        }
+    }
+
+    public FishCounterUI(TMP_Text fishCountName, TMP_InputField fishCount)
+    {
+        this.fishCountName = fishCountName;
+        this.fishCount = fishCount;
+    }
+
+    public void UpdateName(string newName)
+    {
+        newName = newName.Replace("(Clone)", "");
+        fishCountName.text = newName;
+    }
+    public void UpdateDesiredCount(int newCount)
+    {
+        fishCount.text = newCount.ToString();
+        previousValidCountText = newCount.ToString();
+    }
+
+    public void SubscribeToInputCount(UnityAction<int> unityAction)
+    {
+        onValidInput.AddListener(unityAction);
+    }
+
+
+    public void UnSubscribeToInputCount(UnityAction<int> unityAction)
+    {
+        onValidInput.RemoveListener(unityAction);
+    }
+
+}using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.Events;
+
+public class FishTankController : MonoBehaviour
+{
+    [Header("Fish to Spawn")]
+    [SerializeField] List<FishController> availableTypesOfFish;
+    [SerializeField] int desiredFishCount;
+
+    [Header("Random Scale")]
+    [SerializeField] bool toggleRandomScale= true;
+    [SerializeField] bool proportionalScale= false;
+    [SerializeField] Vector2 minRandomScale;
+    [SerializeField] Vector2 maxRandomScale;
+    [Header("SpawnDistance")]
+    [SerializeField] float spawnRangeX = 20;
+    [SerializeField] float spawnRangeY = 20;
+    private int currentTotalFishCount;
+    private Dictionary<FishType, int> fishTypeCount;
+    List<FishController> instantiatedFishes = new List<FishController>();
+
+    public UnityEvent<FishController> onFishRegistered;
+    public UnityEvent<FishController> onFishUnregistered;
+
+
+    void Start()
+    {
+        availableTypesOfFish.Sort((fish1, fish2) => fish1.GetFishType().CompareTo(fish2.GetFishType()));
+        instantiatedFishes = new List<FishController>();
+        if (desiredFishCount < availableTypesOfFish.Count)
+        {
+            desiredFishCount = availableTypesOfFish.Count;
+        }
+        fishTypeCount = new Dictionary<FishType, int>();
+
+        foreach (var type in availableTypesOfFish)
+        {
+            if (!type) continue;
+            fishTypeCount.Add(type.GetFishType(), 0);
+        }
+        foreach (var type in availableTypesOfFish)
+        {
+            if (!type) continue;
+            var newFish = InstantiateASpecificFish(type.GetFishType());
+            RegisterFish(newFish);
+        }
+
+        SpawnDesiredNumberOfFish();
+
+    }
+
+    public void UpdateDesiredTotalFishCount(int newNumber)
+    {
+        if (newNumber <= 0)
+        {
+            return;
+        }
+        bool willAddFish = newNumber > desiredFishCount;
+        desiredFishCount = newNumber;
+        if (willAddFish)
+        {
+            SpawnDesiredNumberOfFish();
+        }
+        else
+        {
+            PurgeFishUntilDesiredNumber();
+        }
+    }
+    void PurgeFishUntilDesiredNumber()
+    {
+        for (int i = currentTotalFishCount; i > desiredFishCount; i--)
+        {
+
+            DestroyFish(instantiatedFishes[currentTotalFishCount - 1].gameObject);
+        }
+    }
+
+    void SpawnDesiredNumberOfFish()
+    {
+        for (int i = currentTotalFishCount; i < desiredFishCount; i++)
+        {
+            var newFish = InstantiateARandomFish();
+            RegisterFish(newFish);
+        }
+    }
+    FishController InstantiateARandomFish()
+    {
+        var currentFish = Instantiate(availableTypesOfFish[Random.Range(0, availableTypesOfFish.Count)], this.transform);
+        currentFish.transform.position = this.transform.position + new Vector3(Random.Range(-spawnRangeX, spawnRangeX), Random.Range(-spawnRangeY, spawnRangeY), 0);
+
+        if (toggleRandomScale) {
+            float xScale =  Random.Range(minInclusive: minRandomScale.x, maxInclusive: maxRandomScale.x);
+            currentFish.transform.localScale = proportionalScale ? new Vector2(xScale,xScale): new Vector2(xScale,
+            Random.Range(minInclusive: minRandomScale.y, maxInclusive: maxRandomScale.y));
+            currentFish.SetMass(xScale);
+        }
+        return currentFish;
+
+    }
+    FishController InstantiateASpecificFish(FishType fishType)
+    {
+        var currentFish = Instantiate(availableTypesOfFish[(int)fishType], this.transform);
+        currentFish.transform.position = this.transform.position + new Vector3(Random.Range(-spawnRangeX, spawnRangeX), Random.Range(-spawnRangeY, spawnRangeY), 0);
+        return currentFish;
+
+    }
+    void RegisterFish(FishController fishToRegister)
+    {
+        instantiatedFishes.Add(fishToRegister);
+        fishToRegister.onFishKilled.AddListener(DestroyFish);
+        if (fishTypeCount.TryGetValue(fishToRegister.GetFishType(), out int previousCount))
+        {
+            fishTypeCount[fishToRegister.GetFishType()] = previousCount + 1;
+            UpdateFishCount();
+            onFishRegistered?.Invoke(fishToRegister);
+
+        }
+    }
+    void DestroyFish(GameObject fish)
+    {
+        DestroyFish(fish.GetComponent<FishController>());
+    }
+    void DestroyFish(FishController fishToDestroy)
+    {
+        instantiatedFishes.Remove(fishToDestroy);
+
+        fishToDestroy.onFishKilled.RemoveListener(DestroyFish);
+        if (fishTypeCount.TryGetValue(fishToDestroy.GetFishType(), out int previousCount))
+        {
+            fishTypeCount[fishToDestroy.GetFishType()] = previousCount - 1;
+            UpdateFishCount();
+            onFishRegistered?.Invoke(fishToDestroy);
+
+        }
+        Destroy(fishToDestroy.gameObject);
+        UpdateFishCount();
+
+        onFishUnregistered?.Invoke(fishToDestroy);
+
+    }
+    void DestroyFishOfType(FishType fishType,int amount)
+    {
+
+        var fishesToDestroy = instantiatedFishes.FindAll((fish) => fish.GetFishType() == fishType);
+        if (amount >= fishesToDestroy.Count)
+        {
+            amount = fishesToDestroy.Count;
+        }
+        for (int i = 0; i < amount; i++)
+        {
+            FishController fish = fishesToDestroy[i];
+            DestroyFish(fish);
+        }
+    }
+    void UpdateFishCount()
+    {
+        currentTotalFishCount = instantiatedFishes.Count;
+    }
+    public void SpawnSpecificTypeOfFish(FishType fishType, int amount)
+    {
+
+        for (int i = 0; i < amount; i++)
+        {
+            var newFish = InstantiateASpecificFish(fishType);
+            RegisterFish(newFish);
+            desiredFishCount = currentTotalFishCount;
+        }
+    }
+    public int GetTypeFishCount(FishType fishType)
+    {
+        return fishTypeCount[fishType];
+    }
+
+    internal void UpdateSpecificFishCount(FishType newFishType, int newNumber)
+    {
+
+        if (newNumber < 0)
+        {
+            return;
+        }
+        bool willAddFish = newNumber > fishTypeCount[newFishType];
+        if (willAddFish)
+        {
+                 SpawnSpecificTypeOfFish(newFishType, newNumber - fishTypeCount[newFishType]);
+        }
+        else
+        {
+            DestroyFishOfType(newFishType,  fishTypeCount[newFishType]-newNumber);
+            
+
+        }
+    }
+
+    public int GetCurrentFishCount => currentTotalFishCount;
+}
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
+
+public class FishTankUI : MonoBehaviour
+{
+    [SerializeField] FishCounterUI fishTotalCount;
+    [SerializeField] FishTankController fishTankController;
+
+    [SerializeField] GameObject fishCounterUIPrefab;
+    Dictionary<FishType, FishCounterUI> fishCounterUIs;
+    [SerializeField] Transform uiParent;
+
+    // Start is called before the first frame update
+    void Awake()
+    {
+
+        fishTotalCount.onValidInput.AddListener(UpdateDesiredCount);
+        fishCounterUIs = new Dictionary<FishType, FishCounterUI>();
+        fishTankController.onFishRegistered.AddListener(UpdateFishRegisteredUI);
+        fishTankController.onFishUnregistered.AddListener(UpdateFishUnregisteredUI);
+    }
+
+    private void UpdateFishRegisteredUI(FishController newFish)
+    {
+        var newFishType = newFish.GetFishType();
+
+        fishTotalCount.UpdateDesiredCount(fishTankController.GetCurrentFishCount);
+        if (fishCounterUIs.ContainsKey(newFishType))
+        {
+            FishCounterUI fishCounterToUpdate = fishCounterUIs[newFish.GetFishType()];
+            fishCounterToUpdate.UpdateDesiredCount(fishTankController.GetTypeFishCount(newFishType));
+            return;
+        }
+
+        var newFishUI = Instantiate(fishCounterUIPrefab, uiParent).GetComponent<FishCounterUI>();
+        newFishUI.UpdateName(newFish.name);
+        newFishUI.UpdateDesiredCount(fishTankController.GetTypeFishCount(newFishType));
+        fishCounterUIs.Add(newFishType, newFishUI); ;
+        newFishUI.SubscribeToInputCount((d) => fishTankController.UpdateSpecificFishCount(newFishType, d));
+
+
+    }
+    private void UpdateFishUnregisteredUI(FishController fishToRemove)
+    {
+        return;
+
+        //todo remove this (still not sure)
+        if (fishCounterUIs.TryGetValue(fishToRemove.GetComponent<FishController>().GetFishType(), out FishCounterUI uiToRemove))
+        {
+
+            uiToRemove.UnSubscribeToInputCount(UpdateDesiredCount);
+            Destroy(uiToRemove.gameObject);
+
+        }
+    }
+    private void UpdateDesiredCount(int parsedCount)
+    {
+        fishTankController.UpdateDesiredTotalFishCount(parsedCount);
+
+    }
+
+}
+
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+
+public class BloodEffectRenderFeature : ScriptableRendererFeature
+{
+    [System.Serializable]
+    public class BloodEffectSettings
+    {
+        public Material bloodEffectMaterial;
+        public RenderTexture bloodAccumulationTexture;
+    }
+
+    public BloodEffectSettings settings = new BloodEffectSettings();
+    private BloodEffectRenderPass bloodEffectPass;
+    public RenderPassEvent renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+    public override void Create()
+    {
+        bloodEffectPass = new BloodEffectRenderPass(settings.bloodEffectMaterial, settings.bloodAccumulationTexture);
+        bloodEffectPass.renderPassEvent = renderPassEvent;
+    }
+
+    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+    {
+        Debug.Log("AddRenderPasses"); if (settings.bloodEffectMaterial == null || settings.bloodAccumulationTexture == null) return;
+
+         renderer.EnqueuePass(bloodEffectPass);
+    }
+}using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+public class BloodEffectRenderPass : ScriptableRenderPass
+{
+    private Material bloodEffectMaterial;
+    private RenderTexture bloodAccumulationTexture;
+ 
+    public BloodEffectRenderPass(Material bloodEffectMaterial, RenderTexture bloodAccumulationTexture)
+    {
+        this.bloodEffectMaterial = bloodEffectMaterial;
+        this.bloodAccumulationTexture = bloodAccumulationTexture;
+    }
+ 
+
+    public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+    {
+
+        if (bloodEffectMaterial == null) return;
+        Debug.Log("Execute");
+        CommandBuffer cmd = CommandBufferPool.Get("Blood Effect");
+        cmd.SetRenderTarget(renderingData.cameraData.renderer.cameraColorTargetHandle);
+        cmd.ClearRenderTarget(true, true, Color.clear);
+        cmd.SetGlobalTexture("_BloodAccumulation", bloodAccumulationTexture);
+
+  
+        // Blit the camera's color target to itself, applying the blood effect
+        RenderTargetIdentifier cameraColorTarget = renderingData.cameraData.renderer.cameraColorTargetHandle;
+        RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
+        int tempID = Shader.PropertyToID("TempBloodEffectRT"); // Assign unique ID
+
+        // Create a temporary Render Texture
+        cmd.GetTemporaryRT(tempID, descriptor, FilterMode.Bilinear);
+
+        // Blit to the temp Render Texture first
+        cmd.Blit(cameraColorTarget, tempID, bloodEffectMaterial);
+
+        // Blit the temp RT to the camera target
+        cmd.Blit(tempID, cameraColorTarget);
+
+        cmd.ReleaseTemporaryRT(tempID); // Release the temp RT
+        context.ExecuteCommandBuffer(cmd);
+        CommandBufferPool.Release(cmd);
+    }
+}using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class VirtualMouse : MonoBehaviour
+{
+    Camera mainCamera;
+
+    void Start(){
+        mainCamera = Camera.main;
+    }
+    void Update()
+    {
+        this.transform.position = (Vector2)mainCamera.ScreenToWorldPoint(Input.mousePosition);
+
+    }
+}
