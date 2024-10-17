@@ -21,7 +21,7 @@ public class BloodEffectRenderPass : ScriptableRenderPass
         Debug.Log("Execute");
         CommandBuffer cmd = CommandBufferPool.Get("Blood Effect");
         cmd.SetRenderTarget(renderingData.cameraData.renderer.cameraColorTargetHandle);
-        cmd.ClearRenderTarget(true, true, Color.clear);
+       // cmd.ClearRenderTarget(true, true, Color.clear);
         cmd.SetGlobalTexture("_BloodAccumulation", bloodAccumulationTexture);
 
   

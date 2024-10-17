@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2717260266794480767}
   - component: {fileID: 9136232570761987900}
   - component: {fileID: 2355406839761562533}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: FishBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -70,7 +70,7 @@ MonoBehaviour:
   maxAvoidForce: 20
   avoidLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 9
   onAvoidEvent:
     m_PersistentCalls:
       m_Calls:
@@ -166,7 +166,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6929069849837875879}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Visuals
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -198,7 +198,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5662640396572533653}
   - component: {fileID: 5641052789580266628}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: InternalTarget
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -282,7 +282,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6207235621160740353}
   - component: {fileID: 6172640854297417848}
-  m_Layer: 0
+  - component: {fileID: 2713122863536814765}
+  m_Layer: 3
   m_Name: Collisions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -339,6 +340,41 @@ CircleCollider2D:
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
   m_Radius: 0.5
+--- !u!58 &2713122863536814765
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4881126954157681653}
+  m_Enabled: 0
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  serializedVersion: 2
+  m_Radius: 0.5
 --- !u!1 &6453277593809906375
 GameObject:
   m_ObjectHideFlags: 0
@@ -350,7 +386,7 @@ GameObject:
   - component: {fileID: 3550286227463801255}
   - component: {fileID: 6001073646341057613}
   - component: {fileID: 2936793770334708303}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: SpeedParticles
   m_TagString: Untagged
   m_Icon: {fileID: 0}

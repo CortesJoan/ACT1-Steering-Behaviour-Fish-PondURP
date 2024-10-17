@@ -56,7 +56,7 @@ public class FishTankController : MonoBehaviour
 
     public void UpdateDesiredTotalFishCount(int newNumber)
     {
-        if (newNumber <= 0)
+        if (newNumber < 0)
         {
             return;
         }

@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46cc52bfa197d1a48be2c7072725e2a3, type: 3}
   m_Name: BloodEffectRenderFeature
   m_EditorClassIdentifier: 
-  m_Active: 0
+  m_Active: 1
   settings:
     bloodEffectMaterial: {fileID: 2100000, guid: 94080d52f659d2e40877d0b8c2f9c2fe, type: 2}
     bloodAccumulationTexture: {fileID: 8400000, guid: d93c7a72b022bbb49ab3c24c46ca33a9, type: 2}
-  renderPassEvent: 500
+  renderPassEvent: 230
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0

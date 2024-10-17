@@ -86,6 +86,7 @@ public class FishController : MonoBehaviour, IPointerClickHandler, IPointerDownH
 
     public void OnPointerClick(PointerEventData eventData)
     {
+        return;
         Debug.Log("Pointer Click");
         if (eventData.button == PointerEventData.InputButton.Left)
         {
@@ -93,7 +94,7 @@ public class FishController : MonoBehaviour, IPointerClickHandler, IPointerDownH
         }
     }
 
-    private void KillFish()
+    public void KillFish()
     {
  
         RenderTexture bloodAccumulationTexture = bloodEffectRenderFeature.settings.bloodAccumulationTexture;
